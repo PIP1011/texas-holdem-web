@@ -20,6 +20,7 @@ input[type=number], input[type=text], select {
     display: flex;
     flex-wrap: wrap;
     justify-content: center;
+    margin-top: 10px;
 }
 
 .exampleHand {
@@ -28,7 +29,7 @@ input[type=number], input[type=text], select {
     border-radius: 10px;
     padding: 10px;
     margin: 5px;
-    width: 180px;
+    width: 200px;
     text-align: center;
 }
 
@@ -39,7 +40,5 @@ input[type=number], input[type=text], select {
     margin: 2px;
     border-radius: 4px;
     background-color: #006400;
+    font-weight: bold;
 }
-
-.card.red { color: red; }
-.card.black { color: white; }
