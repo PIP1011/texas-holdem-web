@@ -3,8 +3,7 @@ let pot = 0;
 let currentPlayer = 0;
 let rounds = ["Pre-Flop", "Flop", "Turn", "River"];
 let currentRoundIndex = 0;
-let dealerIndex = 0;
-let highestBet = 0;
+let dealerIndex = 0; // tracks dealer position
 
 function setupPlayers() {
     const numPlayers = parseInt(document.getElementById('numPlayers').value);
@@ -16,6 +15,8 @@ function setupPlayers() {
             <div>
                 <label>Player ${i+1} Name: </label>
                 <input type="text" id="name${i}" value="Player${i+1}">
+                <label>Starting Money: </label>
+                <input type="number" id="money${i}" value="100">
             </div>
         `;
     }
@@ -27,7 +28,8 @@ function startGame() {
     players = [];
     for (let i = 0; i < numPlayers; i++) {
         const name = document.getElementById(`name${i}`).value;
-        players.push({name: name, total: 10000, folded: false, currentBet: 0});
+        const money = parseFloat(document.getElementById(`money${i}`).value);
+        players.push({name: name, total: money, folded: false, currentBet: 0});
     }
     document.getElementById('setup').style.display = 'none';
     document.getElementById('game').style.display = 'block';
@@ -45,26 +47,23 @@ function resetHandState() {
     players.forEach(p => { p.folded = false; p.currentBet = 0; });
     pot = 0;
     currentRoundIndex = 0;
-    highestBet = 0;
 }
 
 function setupBlinds() {
     const numPlayers = players.length;
     const sbIndex = (dealerIndex + 1) % numPlayers;
     const bbIndex = (dealerIndex + 2) % numPlayers;
-    const sbAmount = 50;
-    const bbAmount = 100;
+    const sbAmount = 5;
+    const bbAmount = 10;
 
     players[sbIndex].total -= sbAmount;
     players[sbIndex].currentBet = sbAmount;
-
     players[bbIndex].total -= bbAmount;
     players[bbIndex].currentBet = bbAmount;
 
     pot += sbAmount + bbAmount;
-    highestBet = bbAmount;
 
-    currentPlayer = (bbIndex + 1) % numPlayers;
+    currentPlayer = (bbIndex + 1) % numPlayers; // first to act
     alert(`${players[sbIndex].name} posts Small Blind $${sbAmount}\n${players[bbIndex].name} posts Big Blind $${bbAmount}`);
 }
 
@@ -72,7 +71,7 @@ function updateDisplay() {
     let status = '';
     players.forEach((p, i) => {
         let dealer = i === dealerIndex ? ' (Dealer)' : '';
-        status += `<p>${p.name}: $${p.total.toFixed(2)} ${p.folded ? '(Folded)' : ''}${dealer} | Current Bet: $${p.currentBet}</p>`;
+        status += `<p>${p.name}: $${p.total.toFixed(2)} ${p.folded ? '(Folded)' : ''}${dealer}</p>`;
     });
     document.getElementById('playerStatus').innerHTML = status;
     document.getElementById('pot').textContent = pot.toFixed(2);
@@ -80,98 +79,73 @@ function updateDisplay() {
     document.getElementById('roundName').textContent = rounds[currentRoundIndex];
 }
 
-function playerBet() {
-    const amount = parseInt(document.getElementById('betAmount').value);
+function bet() {
     let p = players[currentPlayer];
-    if (!p.folded && amount > 0 && amount <= p.total) {
-        p.total -= amount;
-        p.currentBet += amount;
-        pot += amount;
-        if(p.currentBet > highestBet) highestBet = p.currentBet;
+    if (!p.folded && p.total >= 10) {
+        p.total -= 10;
+        p.currentBet += 10;
+        pot += 10;
         nextActivePlayer();
-    } else {
-        alert("Invalid bet amount");
-    }
-    document.getElementById('betAmount').value = '';
-}
-
-function playerCall() {
-    let p = players[currentPlayer];
-    const callAmount = highestBet - p.currentBet;
-    if (!p.folded && callAmount <= p.total) {
-        p.total -= callAmount;
-        p.currentBet += callAmount;
-        pot += callAmount;
-        nextActivePlayer();
-    } else if(callAmount > p.total){
-        alert("Not enough money to call!");
     }
 }
 
-function playerCheck() {
-    let p = players[currentPlayer];
-    if(p.currentBet === highestBet){
-        nextActivePlayer();
-    } else {
-        alert("Cannot check, must call or raise");
-    }
-}
-
-function playerFold() {
+function fold() {
     players[currentPlayer].folded = true;
     checkWinner();
     nextActivePlayer();
 }
 
 function nextActivePlayer() {
-    let activePlayers = players.filter(p => !p.folded);
-    if(activePlayers.length === 1){
-        endHand(activePlayers[0].name);
+    let activeCount = players.filter(p => !p.folded).length;
+    if (activeCount <= 1) {
+        // Only one player left
+        endHand();
         return;
     }
+
     do {
         currentPlayer = (currentPlayer + 1) % players.length;
     } while(players[currentPlayer].folded);
+
     updateDisplay();
 }
 
 function promptNextActivePlayer() {
-    if(players[currentPlayer].folded) nextActivePlayer();
+    // Skips folded players
+    if (players[currentPlayer].folded) nextActivePlayer();
     else updateDisplay();
 }
 
 function nextRound() {
     currentRoundIndex++;
-    if(currentRoundIndex >= rounds.length){
-        let remainingPlayers = players.filter(p => !p.folded).map(p => p.name);
-        if(remainingPlayers.length === 1){
-            endHand(remainingPlayers[0]);
-        } else {
-            let winner = prompt("Round finished! Who won the pot? Choose from: " + remainingPlayers.join(", "));
-            endHand(winner);
-        }
+    if (currentRoundIndex >= rounds.length) {
+        endHand();
     } else {
-        players.forEach(p => p.currentBet = 0);
-        highestBet = 0;
-        currentPlayer = (dealerIndex + 1) % players.length; // first to act after dealer
+        players.forEach(p => p.currentBet = 0); // reset bets
+        currentPlayer = 0;
         promptNextActivePlayer();
     }
 }
 
-function endHand(winnerName){
-    let winner = players.find(p => p.name === winnerName);
-    if(winner){
+function endHand() {
+    let remainingPlayers = players.filter(p => !p.folded).map(p => p.name);
+    if (remainingPlayers.length === 1) {
+        alert(`${remainingPlayers[0]} wins the pot!`);
+        let winner = players.find(p => p.name === remainingPlayers[0]);
         winner.total += pot;
-        alert(`${winner.name} wins the pot of $${pot.toFixed(2)}!`);
+    } else {
+        let winner = prompt("Hand finished! Who won the pot? Choose from: " + remainingPlayers.join(", "));
+        awardPot(winner);
     }
     pot = 0;
-    dealerIndex = (dealerIndex + 1) % players.length;
+    dealerIndex = (dealerIndex + 1) % players.length; // rotate dealer
     startHand();
 }
 
-function checkWinner(){
-    let active = players.filter(p => !p.folded);
-    if(active.length === 1){
-        endHand(active[0].name);
+function awardPot(winnerName) {
+    let winner = players.find(p => p.name === winnerName);
+    if (winner) {
+        winner.total += pot;
+        alert(`${winner.name} wins the pot!`);
     }
 }
