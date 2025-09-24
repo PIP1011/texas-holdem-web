@@ -118,7 +118,7 @@ function submitAction() {
     }
 
     updatePotDisplay();
-    renderPlayerTotals();
+    renderPlayerTotals(); // always update totals
     nextPlayer();
 }
 
@@ -140,10 +140,15 @@ function isRoundComplete() {
 }
 
 function updatePotDisplay() { document.getElementById('pot').textContent = pot; }
+
 function renderPlayerTotals() {
     const totalsDiv = document.getElementById('totalsList');
     totalsDiv.innerHTML = '';
-    players.forEach(p => { totalsDiv.innerHTML += `<div>${p.name}: $${p.total}</div>`; });
+    players.forEach(p => {
+        const pDiv = document.createElement('div');
+        pDiv.textContent = `${p.name}: $${p.total}` + (p.folded ? " (Folded)" : "");
+        totalsDiv.appendChild(pDiv);
+    });
 }
 
 // --- Community & Hole Cards Input ---
@@ -236,10 +241,8 @@ function endHandEvaluation() {
     renderPlayerTotals();
 }
 
-// --- Hand Evaluation (same as previous code) ---
-function evaluateBestHand(cards){/* same evaluation code from before */}
-
-// --- Hand Rankings Display ---
-const exampleHands=[/* same exampleHands as before */];
-function renderExampleHands(){/* same renderExampleHands code as before */}
+// --- Hand Evaluation & Examples (same as previous code) ---
+function evaluateBestHand(cards){ /*...same as previous code...*/ }
+const exampleHands=[ /*...same as previous code...*/ ];
+function renderExampleHands(){ /*...same as previous code...*/ }
 renderExampleHands();
