@@ -30,10 +30,11 @@ function startGame() {
     }
     document.getElementById('setup').style.display = 'none';
     document.getElementById('game').style.display = 'block';
+    renderPlayerTotals(); // show totals immediately
     startHand();
 }
 
-// --- Start a Hand ---
+// --- Start Hand ---
 function startHand() {
     resetHandState();
     setupBlinds();
@@ -118,7 +119,7 @@ function submitAction() {
     }
 
     updatePotDisplay();
-    renderPlayerTotals(); // always update totals
+    renderPlayerTotals(); // always show updated totals
     nextPlayer();
 }
 
@@ -143,6 +144,7 @@ function updatePotDisplay() { document.getElementById('pot').textContent = pot; 
 
 function renderPlayerTotals() {
     const totalsDiv = document.getElementById('totalsList');
+    if(!totalsDiv) return;
     totalsDiv.innerHTML = '';
     players.forEach(p => {
         const pDiv = document.createElement('div');
@@ -241,8 +243,5 @@ function endHandEvaluation() {
     renderPlayerTotals();
 }
 
-// --- Hand Evaluation & Examples (same as previous code) ---
-function evaluateBestHand(cards){ /*...same as previous code...*/ }
-const exampleHands=[ /*...same as previous code...*/ ];
-function renderExampleHands(){ /*...same as previous code...*/ }
-renderExampleHands();
+// --- Hand evaluation and examples ---
+// Placeholder: implement evaluateBestHand() and renderExampleHands() as in previous code
