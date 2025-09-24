@@ -3,7 +3,8 @@ let pot = 0;
 let currentPlayer = 0;
 let rounds = ["Pre-Flop", "Flop", "Turn", "River"];
 let currentRoundIndex = 0;
-let dealerIndex = 0; // rotates each hand
+let dealerIndex = 0;
+let highestBet = 0;
 
 function setupPlayers() {
     const numPlayers = parseInt(document.getElementById('numPlayers').value);
@@ -15,8 +16,6 @@ function setupPlayers() {
             <div>
                 <label>Player ${i+1} Name: </label>
                 <input type="text" id="name${i}" value="Player${i+1}">
-                <label>Starting Money: </label>
-                <input type="number" id="money${i}" value="100">
             </div>
         `;
     }
@@ -28,8 +27,7 @@ function startGame() {
     players = [];
     for (let i = 0; i < numPlayers; i++) {
         const name = document.getElementById(`name${i}`).value;
-        const money = parseFloat(document.getElementById(`money${i}`).value);
-        players.push({name: name, total: money, folded: false, currentBet: 0});
+        players.push({name: name, total: 10000, folded: false, currentBet: 0});
     }
     document.getElementById('setup').style.display = 'none';
     document.getElementById('game').style.display = 'block';
@@ -47,26 +45,26 @@ function resetHandState() {
     players.forEach(p => { p.folded = false; p.currentBet = 0; });
     pot = 0;
     currentRoundIndex = 0;
+    highestBet = 0;
 }
 
 function setupBlinds() {
     const numPlayers = players.length;
     const sbIndex = (dealerIndex + 1) % numPlayers;
     const bbIndex = (dealerIndex + 2) % numPlayers;
-    const sbAmount = 5;
-    const bbAmount = 10;
+    const sbAmount = 50;
+    const bbAmount = 100;
 
-    // Deduct blinds
     players[sbIndex].total -= sbAmount;
     players[sbIndex].currentBet = sbAmount;
+
     players[bbIndex].total -= bbAmount;
     players[bbIndex].currentBet = bbAmount;
 
     pot += sbAmount + bbAmount;
+    highestBet = bbAmount;
 
-    // First player to act is left of big blind
     currentPlayer = (bbIndex + 1) % numPlayers;
-
     alert(`${players[sbIndex].name} posts Small Blind $${sbAmount}\n${players[bbIndex].name} posts Big Blind $${bbAmount}`);
 }
 
@@ -74,7 +72,7 @@ function updateDisplay() {
     let status = '';
     players.forEach((p, i) => {
         let dealer = i === dealerIndex ? ' (Dealer)' : '';
-        status += `<p>${p.name}: $${p.total.toFixed(2)} ${p.folded ? '(Folded)' : ''}${dealer}</p>`;
+        status += `<p>${p.name}: $${p.total.toFixed(2)} ${p.folded ? '(Folded)' : ''}${dealer} | Current Bet: $${p.currentBet}</p>`;
     });
     document.getElementById('playerStatus').innerHTML = status;
     document.getElementById('pot').textContent = pot.toFixed(2);
@@ -82,17 +80,44 @@ function updateDisplay() {
     document.getElementById('roundName').textContent = rounds[currentRoundIndex];
 }
 
-function bet() {
+function playerBet() {
+    const amount = parseInt(document.getElementById('betAmount').value);
     let p = players[currentPlayer];
-    if(!p.folded && p.total >= 10){
-        p.total -= 10;
-        p.currentBet += 10;
-        pot += 10;
+    if (!p.folded && amount > 0 && amount <= p.total) {
+        p.total -= amount;
+        p.currentBet += amount;
+        pot += amount;
+        if(p.currentBet > highestBet) highestBet = p.currentBet;
         nextActivePlayer();
+    } else {
+        alert("Invalid bet amount");
+    }
+    document.getElementById('betAmount').value = '';
+}
+
+function playerCall() {
+    let p = players[currentPlayer];
+    const callAmount = highestBet - p.currentBet;
+    if (!p.folded && callAmount <= p.total) {
+        p.total -= callAmount;
+        p.currentBet += callAmount;
+        pot += callAmount;
+        nextActivePlayer();
+    } else if(callAmount > p.total){
+        alert("Not enough money to call!");
     }
 }
 
-function fold() {
+function playerCheck() {
+    let p = players[currentPlayer];
+    if(p.currentBet === highestBet){
+        nextActivePlayer();
+    } else {
+        alert("Cannot check, must call or raise");
+    }
+}
+
+function playerFold() {
     players[currentPlayer].folded = true;
     checkWinner();
     nextActivePlayer();
@@ -127,7 +152,8 @@ function nextRound() {
         }
     } else {
         players.forEach(p => p.currentBet = 0);
-        currentPlayer = 0;
+        highestBet = 0;
+        currentPlayer = (dealerIndex + 1) % players.length; // first to act after dealer
         promptNextActivePlayer();
     }
 }
@@ -139,7 +165,7 @@ function endHand(winnerName){
         alert(`${winner.name} wins the pot of $${pot.toFixed(2)}!`);
     }
     pot = 0;
-    dealerIndex = (dealerIndex + 1) % players.length; // rotate dealer
+    dealerIndex = (dealerIndex + 1) % players.length;
     startHand();
 }
 
