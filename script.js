@@ -234,12 +234,12 @@ function renderExampleHands() {
         cardsDiv.style.justifyContent = "center";
         cardsDiv.style.marginTop = "5px";
         h.cards.forEach(c=>{
-            const cd = document.createElement("div");
-            cd.classList.add("card");
-            cd.textContent = c;
-            if(c.slice(-1)==='h'||c.slice(-1)==='d') cd.classList.add("red");
-            else cd.classList.add("black");
-            cardsDiv.appendChild(cd);
+            const cardDiv = document.createElement("div");
+            cardDiv.classList.add("card");
+            cardDiv.textContent = c;
+            if(c.slice(-1)==='h'||c.slice(-1)==='d') cardDiv.style.color = "red";
+            else cardDiv.style.color = "white";
+            cardsDiv.appendChild(cardDiv);
         });
         div.appendChild(cardsDiv);
         container.appendChild(div);
