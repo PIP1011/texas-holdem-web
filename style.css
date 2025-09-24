@@ -11,24 +11,43 @@ button {
     font-size: 16px;
 }
 
-#controls button {
-    width: 100px;
-}
-
-input[type=number] {
+input[type=number], input[type=text] {
     width: 100px;
     padding: 5px;
 }
 
-#handRankings {
+.cards {
+    display: flex;
+    justify-content: center;
+    margin: 10px;
+}
+
+.card {
+    width: 50px;
+    height: 70px;
+    border: 1px solid white;
+    border-radius: 5px;
+    background-color: white;
+    color: black;
+    font-weight: bold;
+    font-size: 20px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin: 2px;
+}
+
+.card.red { color: red; }
+
+.cardsContainer {
     display: flex;
     flex-wrap: wrap;
     justify-content: center;
 }
 
-.hand {
+.exampleHand {
     background-color: #006400;
-    border: 2px solid #fff;
+    border: 2px solid white;
     border-radius: 10px;
     padding: 10px;
     margin: 5px;
