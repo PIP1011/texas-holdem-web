@@ -20,10 +20,15 @@
     <h2>Pot: $<span id="pot">0</span></h2>
     <h3>Round: <span id="roundName">Pre-Flop</span></h3>
     <div id="playerStatus"></div>
+
     <div id="controls">
-        <button onclick="bet()">Bet 10</button>
-        <button onclick="fold()">Fold</button>
+        <input type="number" id="betAmount" placeholder="Enter amount" min="1">
+        <button onclick="playerBet()">Bet/Raise</button>
+        <button onclick="playerCall()">Call</button>
+        <button onclick="playerCheck()">Check</button>
+        <button onclick="playerFold()">Fold</button>
     </div>
+    
     <p>Current Player: <span id="currentPlayer"></span></p>
     <button onclick="nextRound()" style="margin-top:20px;">Next Round</button>
 </div>
