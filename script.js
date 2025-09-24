@@ -43,6 +43,8 @@ function resetHandState() {
     players.forEach(p => { p.folded = false; p.currentBet = 0; });
     pot = 0;
     highestBet = 0;
+    renderCards([], []);
+    updatePotDisplay();
 }
 
 // --- Blinds ---
@@ -63,6 +65,11 @@ function setupBlinds() {
     highestBet = bbAmount;
 
     alert(`${players[sbIndex].name} posts Small Blind $${sbAmount}\n${players[bbIndex].name} posts Big Blind $${bbAmount}`);
+    updatePotDisplay();
+}
+
+function updatePotDisplay() {
+    document.getElementById('pot').textContent = pot;
 }
 
 // --- Automatic Betting Round ---
@@ -72,6 +79,7 @@ function startRound() {
     players.forEach(p => p.currentBet = 0);
     highestBet = 0;
 
+    document.getElementById('roundName').textContent = ["Pre-Flop", "Flop", "Turn", "River"][currentRoundIndex];
     alert(`Starting ${["Pre-Flop", "Flop", "Turn", "River"][currentRoundIndex]} Round`);
     processPlayerTurn(getNextActivePlayer(dealerIndex));
 }
@@ -100,6 +108,7 @@ function processPlayerTurn(playerIndex) {
         if (p.currentBet < highestBet) { alert("Cannot check, must call or raise."); processPlayerTurn(playerIndex); return; }
     } else { alert("Invalid input. Try again."); processPlayerTurn(playerIndex); return; }
 
+    updatePotDisplay();
     if (isRoundComplete()) { currentRoundIndex++; startRound(); }
     else { nextPlayer(playerIndex); }
 }
@@ -127,6 +136,7 @@ function endHand() {
     if (remainingPlayers.length === 1) {
         remainingPlayers[0].total += pot;
         alert(`${remainingPlayers[0].name} wins the pot of $${pot.toFixed(2)}!`);
+        renderCards([], []); // clear cards
     } else {
         let community = prompt("Enter the 5 community cards (e.g., Ah Ks 10d 2c Jc):").split(" ");
         let playerHands = [];
@@ -134,6 +144,8 @@ function endHand() {
             let cards = prompt(`${p.name}, enter your 2 hole cards (e.g., Ah Ks):`).split(" ");
             playerHands.push({name: p.name, cards});
         });
+
+        renderCards(community, playerHands);
 
         let results = playerHands.map(ph => {
             let allCards = ph.cards.concat(community);
@@ -153,7 +165,47 @@ function endHand() {
     startHand();
 }
 
-// --- Full Hand Evaluator ---
+// --- Visual Card Rendering ---
+function renderCards(community=[], playerHands=[]) {
+    const communityDiv = document.getElementById('communityCards');
+    communityDiv.innerHTML = '';
+    community.forEach(c => {
+        const cardDiv = document.createElement('div');
+        cardDiv.classList.add('card');
+        if(c.slice(-1) === 'h' || c.slice(-1) === 'd') cardDiv.classList.add('red');
+        cardDiv.textContent = c.slice(0,-1) + suitSymbol(c.slice(-1));
+        communityDiv.appendChild(cardDiv);
+    });
+
+    const playersDiv = document.getElementById('playersHands');
+    playersDiv.innerHTML = '';
+    playerHands.forEach(ph => {
+        const playerDiv = document.createElement('div');
+        playerDiv.innerHTML = `<strong>${ph.name}</strong>`;
+        const handDiv = document.createElement('div');
+        handDiv.classList.add('cards');
+        ph.cards.forEach(c => {
+            const cardDiv = document.createElement('div');
+            cardDiv.classList.add('card');
+            if(c.slice(-1) === 'h' || c.slice(-1) === 'd') cardDiv.classList.add('red');
+            cardDiv.textContent = c.slice(0,-1) + suitSymbol(c.slice(-1));
+            handDiv.appendChild(cardDiv);
+        });
+        playerDiv.appendChild(handDiv);
+        playersDiv.appendChild(playerDiv);
+    });
+}
+
+function suitSymbol(s) {
+    switch(s) {
+        case 'h': return '♥';
+        case 'd': return '♦';
+        case 'c': return '♣';
+        case 's': return '♠';
+    }
+}
+
+// --- Hand Evaluation ---
 function evaluateBestHand(cards) {
     const suits = cards.map(c => c.slice(-1));
     const values = cards.map(c => cardValue(c)).sort((a,b)=>b-a);
@@ -209,3 +261,40 @@ function cardValue(card){
     if(v==="J") return 11;
     return parseInt(v);
 }
+
+// --- Visual Hand Rankings ---
+const exampleHands = [
+    {name: "Royal Flush", cards: ["10s","Js","Qs","Ks","As"]},
+    {name: "Straight Flush", cards: ["5h","6h","7h","8h","9h"]},
+    {name: "Four of a Kind", cards: ["Kc","Kd","Kh","Ks","3d"]},
+    {name: "Full House", cards: ["Qc","Qd","Qh","9c","9s"]},
+    {name: "Flush", cards: ["2h","6h","9h","Jh","Kh"]},
+    {name: "Straight", cards: ["4c","5d","6s","7h","8c"]},
+    {name: "Three of a Kind", cards: ["7c","7d","7s","Kh","2s"]},
+    {name: "Two Pair", cards: ["Jc","Jd","4s","4h","9s"]},
+    {name: "One Pair", cards: ["10c","10d","7h","3s","2c"]},
+    {name: "High Card", cards: ["Ac","Jd","8h","5s","3c"]}
+];
+
+function renderExampleHands() {
+    const container = document.getElementById('handRankings');
+    container.innerHTML = '';
+    exampleHands.forEach(hand => {
+        const handDiv = document.createElement('div');
+        handDiv.classList.add('exampleHand');
+        handDiv.innerHTML = `<strong>${hand.name}</strong>`;
+        const cardsDiv = document.createElement('div');
+        cardsDiv.classList.add('cards');
+        hand.cards.forEach(c => {
+            const cardDiv = document.createElement('div');
+            cardDiv.classList.add('card');
+            if(c.slice(-1)==='h' || c.slice(-1)==='d') cardDiv.classList.add('red');
+            cardDiv.textContent = c.slice(0,-1) + suitSymbol(c.slice(-1));
+            cardsDiv.appendChild(cardDiv);
+        });
+        handDiv.appendChild(cardsDiv);
+        container.appendChild(handDiv);
+    });
+}
+
+renderExampleHands();
