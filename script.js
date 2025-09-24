@@ -30,7 +30,7 @@ function startGame() {
     }
     document.getElementById('setup').style.display = 'none';
     document.getElementById('game').style.display = 'block';
-    renderPlayerTotals(); // show totals immediately
+    renderPlayerTotals();
     startHand();
 }
 
@@ -118,7 +118,7 @@ function submitAction() {
     }
 
     updatePotDisplay();
-    renderPlayerTotals(); // always show updated totals
+    renderPlayerTotals();
     nextPlayer();
 }
 
@@ -209,11 +209,6 @@ function endHandEvaluation() {
 }
 
 // --- Hand Rankings Examples ---
-const HAND_RANKS = [
-    "High Card","One Pair","Two Pair","Three of a Kind","Straight",
-    "Flush","Full House","Four of a Kind","Straight Flush","Royal Flush"
-];
-
 const exampleHands = [
     {name:"Royal Flush", cards:["Ah","Kh","Qh","Jh","10h"]},
     {name:"Straight Flush", cards:["9c","8c","7c","6c","5c"]},
@@ -229,16 +224,35 @@ const exampleHands = [
 
 function renderExampleHands() {
     const container = document.getElementById("handRankings");
+    container.innerHTML = '';
     exampleHands.forEach(h=>{
         const div = document.createElement("div");
         div.classList.add("exampleHand");
-        div.innerHTML=`<strong>${h.name}</strong>`;
+        div.innerHTML = `<strong>${h.name}</strong>`;
+        const cardsDiv = document.createElement("div");
+        cardsDiv.style.display = "flex";
+        cardsDiv.style.justifyContent = "center";
+        cardsDiv.style.marginTop = "5px";
+        h.cards.forEach(c=>{
+            const cd = document.createElement("div");
+            cd.classList.add("card");
+            cd.textContent = c;
+            if(c.slice(-1)==='h'||c.slice(-1)==='d') cd.classList.add("red");
+            else cd.classList.add("black");
+            cardsDiv.appendChild(cd);
+        });
+        div.appendChild(cardsDiv);
         container.appendChild(div);
     });
 }
 renderExampleHands();
 
-// --- Evaluate Best Hand Functions ---
+// --- Evaluate Best Hand ---
+const HAND_RANKS = [
+    "High Card","One Pair","Two Pair","Three of a Kind","Straight",
+    "Flush","Full House","Four of a Kind","Straight Flush","Royal Flush"
+];
+
 function evaluateBestHand(cards) {
     const ranksMap = {"2":2,"3":3,"4":4,"5":5,"6":6,"7":7,"8":8,"9":9,"10":10,"J":11,"Q":12,"K":13,"A":14};
     const hand = cards.map(c => ({rank:ranksMap[c.slice(0,-1)], suit:c.slice(-1)}));
