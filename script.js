@@ -48,7 +48,6 @@ function resetHandState() {
     highestBet = 0;
     community = [];
     playerHands = [];
-    renderCards([], []);
     updatePotDisplay();
     renderPlayerTotals();
 }
@@ -144,7 +143,6 @@ function updatePotDisplay() { document.getElementById('pot').textContent = pot; 
 
 function renderPlayerTotals() {
     const totalsDiv = document.getElementById('totalsList');
-    if(!totalsDiv) return;
     totalsDiv.innerHTML = '';
     players.forEach(p => {
         const pDiv = document.createElement('div');
@@ -167,7 +165,7 @@ function submitCommunity() {
 
 let playerCardIndex = 0;
 function showPlayerCardsInput(index) {
-    if(index >= players.length) { renderCards(community, playerHands); endHandEvaluation(); return; }
+    if(index >= players.length) { endHandEvaluation(); return; }
     let p = players[index];
     if(p.folded) { showPlayerCardsInput(index+1); return; }
 
@@ -183,39 +181,6 @@ function submitHoleCards() {
     document.getElementById('playerCardsInput').style.display = 'none';
     showPlayerCardsInput(playerCardIndex+1);
 }
-
-// --- Render Cards ---
-function renderCards(community=[], playerHands=[]) {
-    const communityDiv = document.getElementById('communityCards');
-    communityDiv.innerHTML = '';
-    community.forEach(c => {
-        const cardDiv = document.createElement('div');
-        cardDiv.classList.add('card');
-        if(c.slice(-1)==='h'||c.slice(-1)==='d') cardDiv.classList.add('red');
-        cardDiv.textContent=c.slice(0,-1)+suitSymbol(c.slice(-1));
-        communityDiv.appendChild(cardDiv);
-    });
-
-    const playersDiv = document.getElementById('playersHands');
-    playersDiv.innerHTML = '';
-    playerHands.forEach(ph => {
-        const playerDiv = document.createElement('div');
-        playerDiv.innerHTML = `<strong>${ph.name}</strong>`;
-        const handDiv = document.createElement('div');
-        handDiv.classList.add('cards');
-        ph.cards.forEach(c => {
-            const cardDiv = document.createElement('div');
-            cardDiv.classList.add('card');
-            if(c.slice(-1)==='h'||c.slice(-1)==='d') cardDiv.classList.add('red');
-            cardDiv.textContent = c.slice(0,-1)+suitSymbol(c.slice(-1));
-            handDiv.appendChild(cardDiv);
-        });
-        playerDiv.appendChild(handDiv);
-        playersDiv.appendChild(playerDiv);
-    });
-}
-
-function suitSymbol(s){ switch(s){ case 'h': return '♥'; case 'd': return '♦'; case 'c': return '♣'; case 's': return '♠'; } }
 
 // --- End Hand & Evaluate ---
 function endHandEvaluation() {
@@ -243,5 +208,84 @@ function endHandEvaluation() {
     renderPlayerTotals();
 }
 
-// --- Hand evaluation and examples ---
-// Placeholder: implement evaluateBestHand() and renderExampleHands() as in previous code
+// --- Hand Rankings Examples ---
+const HAND_RANKS = [
+    "High Card","One Pair","Two Pair","Three of a Kind","Straight",
+    "Flush","Full House","Four of a Kind","Straight Flush","Royal Flush"
+];
+
+const exampleHands = [
+    {name:"Royal Flush", cards:["Ah","Kh","Qh","Jh","10h"]},
+    {name:"Straight Flush", cards:["9c","8c","7c","6c","5c"]},
+    {name:"Four of a Kind", cards:["Qs","Qh","Qc","Qd","2h"]},
+    {name:"Full House", cards:["Kh","Ks","Kd","2c","2d"]},
+    {name:"Flush", cards:["2h","6h","9h","Jh","Kh"]},
+    {name:"Straight", cards:["10s","9h","8d","7c","6h"]},
+    {name:"Three of a Kind", cards:["7s","7h","7d","Qc","2h"]},
+    {name:"Two Pair", cards:["Js","Jd","3h","3c","8s"]},
+    {name:"One Pair", cards:["Ah","Ad","9c","7s","4h"]},
+    {name:"High Card", cards:["As","Kd","10c","7h","4s"]}
+];
+
+function renderExampleHands() {
+    const container = document.getElementById("handRankings");
+    exampleHands.forEach(h=>{
+        const div = document.createElement("div");
+        div.classList.add("exampleHand");
+        div.innerHTML=`<strong>${h.name}</strong>`;
+        container.appendChild(div);
+    });
+}
+renderExampleHands();
+
+// --- Evaluate Best Hand Functions ---
+function evaluateBestHand(cards) {
+    const ranksMap = {"2":2,"3":3,"4":4,"5":5,"6":6,"7":7,"8":8,"9":9,"10":10,"J":11,"Q":12,"K":13,"A":14};
+    const hand = cards.map(c => ({rank:ranksMap[c.slice(0,-1)], suit:c.slice(-1)}));
+    const combos = getCombinations(hand,5);
+    let best = {score:0, name:"High Card"};
+    combos.forEach(c=>{
+        let score = rankHand(c);
+        if(score.score > best.score) best = score;
+    });
+    return best;
+}
+
+function rankHand(hand){
+    const counts={}, suits={};
+    const ranks = hand.map(c=>c.rank).sort((a,b)=>b-a);
+    hand.forEach(c=>{ counts[c.rank]=(counts[c.rank]||0)+1; suits[c.suit]=(suits[c.suit]||0)+1; });
+    const flush = Object.values(suits).some(v=>v===5);
+    const straight = isStraight(ranks);
+
+    if(straight && flush && ranks[0]===14) return {score:10,name:"Royal Flush"};
+    if(straight && flush) return {score:9,name:"Straight Flush"};
+    if(Object.values(counts).includes(4)) return {score:8,name:"Four of a Kind"};
+    if(Object.values(counts).includes(3) && Object.values(counts).includes(2)) return {score:7,name:"Full House"};
+    if(flush) return {score:6,name:"Flush"};
+    if(straight) return {score:5,name:"Straight"};
+    if(Object.values(counts).includes(3)) return {score:4,name:"Three of a Kind"};
+    if(Object.values(counts).filter(v=>v===2).length===2) return {score:3,name:"Two Pair"};
+    if(Object.values(counts).includes(2)) return {score:2,name:"One Pair"};
+    return {score:1,name:"High Card"};
+}
+
+function isStraight(ranks){
+    const uniq = [...new Set(ranks)];
+    if(uniq.length<5) return false;
+    for(let i=0;i<=uniq.length-5;i++){ if(uniq[i]-uniq[i+4]===4) return true; }
+    if(uniq.includes(14)&&uniq.includes(2)&&uniq.includes(3)&&uniq.includes(4)&&uniq.includes(5)) return true;
+    return false;
+}
+
+function getCombinations(arr,k){
+    const result=[];
+    function comb(start,path){
+        if(path.length===k){ result.push([...path]); return; }
+        for(let i=start;i<arr.length;i++){
+            path.push(arr[i]); comb(i+1,path); path.pop();
+        }
+    }
+    comb(0,[]);
+    return result;
+}
