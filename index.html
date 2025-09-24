@@ -25,14 +25,16 @@
         <div id="totalsList"></div>
     </div>
 
-    <div id="community">
-        <h3>Community Cards</h3>
-        <div id="communityCards" class="cards"></div>
+    <div id="communityInput" style="display:none;">
+        <h3>Enter Community Cards</h3>
+        <input type="text" id="communityCardsInput" placeholder="e.g., Ah Ks 10d 2c Jc">
+        <button onclick="submitCommunity()">Submit Community Cards</button>
     </div>
 
-    <div id="playersCards">
-        <h3>Players' Cards</h3>
-        <div id="playersHands"></div>
+    <div id="playerCardsInput" style="display:none;">
+        <h3 id="holePlayerName"></h3>
+        <input type="text" id="holeCards" placeholder="e.g., Ah Ks">
+        <button onclick="submitHoleCards()">Submit Hole Cards</button>
     </div>
 
     <div id="bettingArea" style="display:none;">
@@ -46,18 +48,6 @@
         </select>
         <input type="number" id="raiseAmount" placeholder="Raise Amount" style="display:none;">
         <button onclick="submitAction()">Submit</button>
-    </div>
-
-    <div id="communityInput" style="display:none;">
-        <h3>Enter Community Cards</h3>
-        <input type="text" id="communityCardsInput" placeholder="e.g., Ah Ks 10d 2c Jc">
-        <button onclick="submitCommunity()">Submit Community Cards</button>
-    </div>
-
-    <div id="playerCardsInput" style="display:none;">
-        <h3 id="holePlayerName"></h3>
-        <input type="text" id="holeCards" placeholder="e.g., Ah Ks">
-        <button onclick="submitHoleCards()">Submit Hole Cards</button>
     </div>
 </div>
 
